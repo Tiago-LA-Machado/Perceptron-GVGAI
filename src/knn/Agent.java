@@ -92,34 +92,69 @@ public class Agent extends AbstractPlayer{
 	
 	@Override
 	public ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
-		Tuple current = new Tuple();
+		ArrayList<Tuple> tuples = new ArrayList<Tuple>();		
+		double [] values;
 		
-		if(stateObs.getAvailableActions().contains(ACTIONS.ACTION_USE)){
-			current.values.add(1.0);
-		}
-		else
+		ArrayList<Types.ACTIONS> actions = new ArrayList<Types.ACTIONS>();
+		actions = stateObs.getAvailableActions();
+		values = new double[actions.size()];
+		
+		for (int i = 0; i < actions.size(); i++) 
 		{
-			current.values.add(0.0);
-		}
-		if(stateObs.getAvailableActions().contains(ACTIONS.ACTION_UP) || 
-				stateObs.getAvailableActions().contains(ACTIONS.ACTION_DOWN)){
-			current.values.add(1.0);
-		}
-		else{
-			current.values.add(0.0);
+			Tuple current = new Tuple();
+			if(stateObs.getAvailableActions().contains(ACTIONS.ACTION_USE)){
+				current.values.add(1.0);
+				current.output = actions.get(i);
+			}
+			else
+			{
+				current.values.add(0.0);
+				current.output = actions.get(i);
+			}
+			if(stateObs.getAvailableActions().contains(ACTIONS.ACTION_UP) || 
+					stateObs.getAvailableActions().contains(ACTIONS.ACTION_DOWN)){
+				current.values.add(1.0);
+				current.output = actions.get(i);
+			}
+			else{
+				current.values.add(0.0);
+				current.output = actions.get(i);
+			}
+			
+			Vector2d avatarPosition = stateObs.getAvatarPosition();
+	        
+	        analyzeData(stateObs.getResourcesPositions(), avatarPosition, current);
+	        analyzeData(stateObs.getNPCPositions(), avatarPosition, current);
+	        tuples.add(current);
 		}
 		
-		Vector2d avatarPosition = stateObs.getAvatarPosition();
-        
-        analyzeData(stateObs.getResourcesPositions(), avatarPosition, current);
-        analyzeData(stateObs.getNPCPositions(), avatarPosition, current);
 //        analyzeData(stateObs.getImmovablePositions(), avatarPosition, current);
 //        analyzeData(stateObs.getMovablePositions(), avatarPosition, current);
 //        analyzeData(stateObs.getPortalsPositions(), avatarPosition, current);
-        double value = dotProduct(weights, current.values);
-        System.out.println(value);
+        
+		for (int i = 0; i < values.length; i++) 
+		{
+			values[i] = dotProduct(weights, tuples.get(i).values);
+		}
+		
+		int chooseAction = bigger(values);
               
-		return ACTIONS.ACTION_NIL;
+		return tuples.get(chooseAction).output;
+	}
+	
+	public int bigger(double [] list)
+	{
+		int ret = 0;
+		double d = 0.0;
+		for (int i = 0; i < list.length; i++) 
+		{
+			if(list[i] >= d)
+			{
+				d = list[i];
+				ret = i;
+			}
+		}
+		return ret;
 	}
 	
 	private ACTIONS fromAngle(double angle){
