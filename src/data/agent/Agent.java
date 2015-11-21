@@ -1,4 +1,4 @@
-package controllers.humanCollectingData;
+package data.agent;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -66,6 +66,40 @@ public class Agent extends AbstractPlayer{
 		return -1;
 	}
 	
+	private String analyzeData(ArrayList<Observation>[] observations, Vector2d avatarPosition){
+		HashMap<Types.ACTIONS, Integer> numbers = new HashMap<Types.ACTIONS, Integer>();
+        double shortestDistance = -1;
+        Types.ACTIONS shortestDirection = Types.ACTIONS.ACTION_NIL;
+        String dataRow = "";
+        
+        numbers.put(ACTIONS.ACTION_UP, 0);
+        numbers.put(ACTIONS.ACTION_DOWN, 0);
+        numbers.put(ACTIONS.ACTION_LEFT, 0);
+        numbers.put(ACTIONS.ACTION_RIGHT, 0);
+        
+        if(observations != null){
+	        for(int t=0; t<observations.length; t++){
+	        	for(int o=0; o<observations[t].size(); o++){
+	        		Types.ACTIONS direction = fromAngle(observations[t].get(o).position.subtract(avatarPosition).theta());
+	        		double distance = observations[t].get(o).position.mag();
+	        		if(shortestDistance == -1 || distance < shortestDistance){
+	        			shortestDistance = distance;
+	        			shortestDirection = direction;
+	        		}
+	        		numbers.put(direction, numbers.get(direction) + 1);
+	        	}
+	        }
+        }
+        
+        for(Entry<ACTIONS, Integer> num:numbers.entrySet()){
+        	dataRow += num.getValue() + ", ";
+        }
+        
+        dataRow += shortestDistance + ", " + getDirection(shortestDirection);
+        
+        return dataRow;
+	}
+	
 	@Override
 	public ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
 		Vector2d move = Utils.processMovementActionKeys(Game.ki.getMask());
@@ -83,67 +117,15 @@ public class Agent extends AbstractPlayer{
 	        String dataRow = "";
 	        dataRow += canUse + ", " + moveVertically + ", ";
 	        
-	        HashMap<Types.ACTIONS, Integer> numbers = new HashMap<Types.ACTIONS, Integer>();
 	        Vector2d avatarPosition = stateObs.getAvatarPosition();
 	        
-	        double shortestDistance = -1;
-	        Types.ACTIONS shortestDirection = Types.ACTIONS.ACTION_NIL;
+	        dataRow += analyzeData(stateObs.getResourcesPositions(), avatarPosition) + ",";
+	        dataRow += analyzeData(stateObs.getNPCPositions(), avatarPosition) + ", ";
+	        dataRow += analyzeData(stateObs.getImmovablePositions(), avatarPosition) + ", ";
+	        dataRow += analyzeData(stateObs.getMovablePositions(), avatarPosition) + ", ";
+	        dataRow += analyzeData(stateObs.getPortalsPositions(), avatarPosition) + ", ";
 	        
-	        numbers.put(ACTIONS.ACTION_UP, 0);
-	        numbers.put(ACTIONS.ACTION_DOWN, 0);
-	        numbers.put(ACTIONS.ACTION_LEFT, 0);
-	        numbers.put(ACTIONS.ACTION_RIGHT, 0);
-	        
-	        ArrayList<Observation>[] observations = stateObs.getResourcesPositions();
-	        if(observations != null){
-		        for(int t=0; t<observations.length; t++){
-		        	for(int o=0; o<observations[t].size(); o++){
-		        		Types.ACTIONS direction = fromAngle(observations[t].get(o).position.subtract(avatarPosition).theta());
-		        		double distance = observations[t].get(o).position.mag();
-		        		if(shortestDistance == -1 || distance < shortestDistance){
-		        			shortestDistance = distance;
-		        			shortestDirection = direction;
-		        		}
-		        		numbers.put(direction, numbers.get(direction) + 1);
-		        	}
-		        }
-	        }
-	        
-	        for(Entry<ACTIONS, Integer> num:numbers.entrySet()){
-	        	dataRow += num.getValue() + ", ";
-	        }
-	        
-	        dataRow += shortestDistance + ", " + getDirection(shortestDirection) + ", ";
-	        
-	        shortestDistance = -1;
-	        shortestDirection = Types.ACTIONS.ACTION_NIL;
-	        
-	        numbers.put(ACTIONS.ACTION_UP, 0);
-	        numbers.put(ACTIONS.ACTION_DOWN, 0);
-	        numbers.put(ACTIONS.ACTION_LEFT, 0);
-	        numbers.put(ACTIONS.ACTION_RIGHT, 0);
-	        
-	        observations = stateObs.getNPCPositions();
-	        if(observations != null){
-		        for(int t=0; t<observations.length; t++){
-		        	for(int o=0; o<observations[t].size(); o++){
-		        		Types.ACTIONS direction = fromAngle(observations[t].get(o).position.subtract(avatarPosition).theta());
-		        		double distance = observations[t].get(o).position.mag();
-		        		if(shortestDistance == -1 || distance < shortestDistance){
-		        			shortestDistance = distance;
-		        			shortestDirection = direction;
-		        		}
-		        		numbers.put(direction, numbers.get(direction) + 1);
-		        	}
-		        }
-	        }
-	        
-	        for(Entry<ACTIONS, Integer> num:numbers.entrySet()){
-	        	dataRow += num.getValue() + ", ";
-	        }
-	        
-	        dataRow += shortestDistance + ", " + getDirection(shortestDirection) + ", " + getDirection(action);
-	        
+	        dataRow += getDirection(action);
 	        if(action != Types.ACTIONS.ACTION_NIL){
 	        	writer.write(dataRow);
 	        	writer.newLine();

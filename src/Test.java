@@ -26,6 +26,8 @@ public class Test
         String tester = "controllers.human.Agent";
         String a = "ideep.Agent";
         String collector = "data.agent.Agent";
+        String knn = "knn.Agent";
+        String perceptron = "perceptron.Agent";
 
         //Available games:
         String gamesPath = "examples/gridphysics/";
@@ -71,7 +73,7 @@ public class Test
 
         // 2. This plays a game in a level by the controller.
         //ArcadeMachine.runOneGame(game, level1, visuals, hill, recordActionsFile, seed);
-        ArcadeMachine.runOneGame(game, level1, visuals, collector, recordActionsFile, seed);
+        ArcadeMachine.runOneGame(game, level1, visuals, knn, recordActionsFile, seed);
 
         // 3. This replays a game from an action file previously recorded
         //String readActionsFile = "actionsFile_aliens_lvl0.txt";  //This example is for
