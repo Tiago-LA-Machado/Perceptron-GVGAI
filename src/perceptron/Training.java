@@ -90,7 +90,7 @@ public class Training
 		return weights;
 	}
 	
-	static double stepFunction(double threshold, double weights[], double features[])
+	public double stepFunction(double threshold, double weights[], double features[])
 	{
 		double sum = 0.0;
 		

@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map.Entry;
+
 import core.game.Observation;
 import core.game.StateObservation;
 import core.player.AbstractPlayer;
 import ontology.Types;
 import ontology.Types.ACTIONS;
+import perceptron.Training;
 import tools.ElapsedCpuTimer;
 import tools.Vector2d;
 
@@ -18,12 +20,16 @@ public class Agent extends AbstractPlayer{
 	private String fileName;
 	private double[] maxValues;
 	private ArrayList<Tuple> tuples;
+	private Training training;
+	double [] weights;
 	
 	public Agent(StateObservation stateObs, ElapsedCpuTimer elapsedTimer){
 		k = 80;
 		fileName = "/Users/tiagomachado/Documents/workspace/GVG-AI/src/bigFile.txt";
 		maxValues = null;
 		tuples = new ArrayList<Tuple>();
+		training = new Training();
+		weights = training.updateWeights();
 		
 		tools.IO input = new tools.IO();
 		String[] lines = input.readFile(fileName);
@@ -110,36 +116,10 @@ public class Agent extends AbstractPlayer{
 //        analyzeData(stateObs.getImmovablePositions(), avatarPosition, current);
 //        analyzeData(stateObs.getMovablePositions(), avatarPosition, current);
 //        analyzeData(stateObs.getPortalsPositions(), avatarPosition, current);
-        
-        current.normalize(maxValues);
-		
-        for(int i=0; i<tuples.size(); i++){
-        	tuples.get(i).getDistance(current);
-        }
-        Collections.sort(tuples);
-        
-        HashMap<Types.ACTIONS, Integer> output = new HashMap<Types.ACTIONS, Integer>();
-        output.put(Types.ACTIONS.ACTION_LEFT, 0);
-        output.put(Types.ACTIONS.ACTION_RIGHT, 0);
-        output.put(Types.ACTIONS.ACTION_DOWN, 0);
-        output.put(Types.ACTIONS.ACTION_UP, 0);
-        output.put(Types.ACTIONS.ACTION_USE, 0);
-        
-        for(int i=0; i<k; i++){
-        	output.put(tuples.get(i).output, output.get(tuples.get(i).output) + 1);
-        }
-        
-        Types.ACTIONS resultAction = Types.ACTIONS.ACTION_NIL;
-        int maxValue = -1;
-        for(Entry<Types.ACTIONS, Integer> e:output.entrySet())
-        {
-        	if(maxValue < e.getValue()){
-        		resultAction = e.getKey();
-        		maxValue = e.getValue();
-        	}
-        }
+        double value = dotProduct(weights, current.values);
+        System.out.println(value);
               
-		return resultAction;
+		return ACTIONS.ACTION_NIL;
 	}
 	
 	private ACTIONS fromAngle(double angle){
@@ -185,6 +165,30 @@ public class Agent extends AbstractPlayer{
 			return Types.ACTIONS.ACTION_USE;
 		}
 		return Types.ACTIONS.ACTION_NIL;
+	}
+	
+	public double dotProduct(double [] weights, double [] features)
+	{
+		double sum = 0.0;
+
+		for (int i = 0; i < features.length; i++) 
+		{
+			sum = sum + weights[i] * features[i];
+		}
+		sum = sum + weights[weights.length-1];
+		return sum;
+	}
+	
+	public double dotProduct(double [] weights, ArrayList<Double> features)
+	{
+		double sum = 0.0;
+
+		for (int i = 0; i < features.size(); i++) 
+		{
+			sum = sum + weights[i] * features.get(i);
+		}
+		sum = sum + weights[weights.length-1];
+		return sum;
 	}
 
 	class Tuple implements Comparable<Tuple>{
